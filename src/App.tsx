@@ -341,7 +341,7 @@ export default function App() {
                               placeholder="Weight"
                               value={set.weight || ''}
                               onChange={(e) => updateSet(idx, 'weight', parseFloat(e.target.value))}
-                              className="w-full bg-slate-700/50 border-none rounded-xl p-3 text-center focus:ring-2 focus:ring-blue-500 outline-none"
+                              className="w-full bg-slate-700/50 border-none rounded-xl p-3 pl-4 pr-10 focus:ring-2 focus:ring-blue-500 outline-none"
                             />
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-500 pointer-events-none">KG</span>
                           </div>
@@ -351,7 +351,7 @@ export default function App() {
                               placeholder="Reps"
                               value={set.reps || ''}
                               onChange={(e) => updateSet(idx, 'reps', parseInt(e.target.value))}
-                              className="w-full bg-slate-700/50 border-none rounded-xl p-3 text-center focus:ring-2 focus:ring-blue-500 outline-none"
+                              className="w-full bg-slate-700/50 border-none rounded-xl p-3 pl-4 pr-12 focus:ring-2 focus:ring-blue-500 outline-none"
                             />
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-500 pointer-events-none">REPS</span>
                           </div>
