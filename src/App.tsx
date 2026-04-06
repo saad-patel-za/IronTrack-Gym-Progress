@@ -181,11 +181,12 @@ export default function App() {
   const generatePoster = async () => {
     setIsAiLoading(true);
     try {
-      // Check for API key selection for Imagen models
+      // Ensure a key is selected
       if (!(await window.aistudio.hasSelectedApiKey())) {
         await window.aistudio.openSelectKey();
       }
 
+      // Create instance right before call to use the latest key
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-image-preview',
@@ -206,15 +207,22 @@ export default function App() {
           break;
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Image Gen Error:", error);
-      alert("Failed to generate image. Please ensure you have a paid API key selected.");
+      const errorMsg = error?.message || "";
+      
+      if (errorMsg.includes("permission") || errorMsg.includes("not found") || errorMsg.includes("403")) {
+        alert("API Key Error: Please ensure you have selected a valid PAID Google Cloud API key in the settings. Opening key selector...");
+        await window.aistudio.openSelectKey();
+      } else {
+        alert(`Failed to generate image: ${errorMsg || "Unknown error"}`);
+      }
     } finally {
       setIsAiLoading(false);
     }
   };
 
-  // Voice Mode (Simplified Mock for UI/Logic flow)
+  // Voice Mode
   const toggleVoice = async () => {
     if (isVoiceActive) {
       streamRef.current?.getTracks().forEach(t => t.stop());
@@ -222,21 +230,37 @@ export default function App() {
       return;
     }
 
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert("Your browser does not support audio recording or is blocking access.");
+      return;
+    }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        } 
+      });
       streamRef.current = stream;
       setIsVoiceActive(true);
       setTranscription("Listening...");
       
-      // In a real implementation, we would connect to the Live API here.
-      // For this demo, we'll simulate a response after 3 seconds.
+      // Simulated response for demo
       setTimeout(() => {
         setTranscription("Coach: 'Keep your back straight and focus on the squeeze!'");
       }, 3000);
 
-    } catch (err) {
+    } catch (err: any) {
       console.error("Mic Error:", err);
-      alert("Microphone access denied.");
+      if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        alert("No microphone was found. Please plug in a microphone or check your device settings.");
+      } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        alert("Microphone access was denied. Please allow microphone access in your browser settings.");
+      } else {
+        alert(`Microphone Error: ${err.message || "Could not access microphone"}`);
+      }
     }
   };
 
