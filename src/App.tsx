@@ -50,6 +50,13 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Normalize exercise names for consistency
+const normalizeName = (name: string) => {
+  return name.trim().split(/\s+/).map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+  ).join(' ');
+};
+
 // Types
 interface Set {
   reps: number;
@@ -122,10 +129,12 @@ export default function App() {
   const saveWorkout = () => {
     if (!exercise || sets.length === 0) return;
 
+    const normalizedExercise = normalizeName(exercise);
+
     const newWorkout: Workout = {
       id: crypto.randomUUID(),
       date: new Date().toISOString(),
-      exercise,
+      exercise: normalizedExercise,
       sets: sets.filter(s => s.reps > 0 || s.weight > 0)
     };
 
@@ -266,7 +275,9 @@ export default function App() {
 
   // Progress Data
   const exerciseList = useMemo(() => {
-    return Array.from(new Set(workouts.map(w => w.exercise))).sort();
+    // Normalize existing data for consistency in the list
+    const names = workouts.map(w => normalizeName(w.exercise));
+    return Array.from(new Set(names)).sort();
   }, [workouts]);
 
   const [selectedExercise, setSelectedExercise] = useState(exerciseList[0] || '');
@@ -280,8 +291,10 @@ export default function App() {
   const chartData = useMemo(() => {
     if (!selectedExercise) return [];
     
+    const normalizedSelected = normalizeName(selectedExercise);
+    
     return workouts
-      .filter(w => w.exercise === selectedExercise)
+      .filter(w => normalizeName(w.exercise) === normalizedSelected)
       .map(w => ({
         date: new Date(w.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
         timestamp: new Date(w.date).getTime(),
@@ -329,10 +342,16 @@ export default function App() {
                   <input
                     type="text"
                     placeholder="e.g. Bench Press"
+                    list="exercise-suggestions"
                     value={exercise}
                     onChange={(e) => setExercise(e.target.value)}
                     className="w-full bg-slate-800 border-none rounded-2xl p-4 text-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                   />
+                  <datalist id="exercise-suggestions">
+                    {exerciseList.map(ex => (
+                      <option key={ex} value={ex} />
+                    ))}
+                  </datalist>
                 </div>
 
                 <div className="space-y-4">
